@@ -1,8 +1,8 @@
 self.onmessage = function(e) {
-		numeros = e.data.numeros.map(function(x) {
+		e.data.numeros = e.data.numeros.map(function(x) {
 			return x * 5;
 		}); 
 		postMessage({ type: 'add_result',
-		args: numeros});
+		args: e.data});
 		postMessage({ type: 'send_result'});
 };

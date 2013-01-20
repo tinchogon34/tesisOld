@@ -14,7 +14,7 @@ worker_code = "<worker>"; //FUNCION MAP DADA POR EL INVESTIGADOR
 //data = {numeros : [1,2]};		//data recived
 data = <data>;
 
-result = {uno: 1}; // data send
+result = {}; // data send
 /* }}} */
 
 $(document).ready(function() {
@@ -116,6 +116,7 @@ evnt.data = {
 			worker.terminate();
 
 		} else if (msg.type == "add_result") {
+			alert("sape");
 			for(key in msg.args){
    				add_result(key,msg.args[key]);
    			}
