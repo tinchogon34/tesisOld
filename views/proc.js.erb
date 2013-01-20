@@ -2,38 +2,37 @@
 /*	
 Contiene la unidad de trabajo que se ejecuta en el cliente
 */
-/*Globals vars here! It is a dynamic content */
 
 $(function() {
 
 	var post_url = 'http://127.0.0.1:4567/data';
-    var log_url = 'http://127.0.0.1:4567/log';
+	var log_url = 'http://127.0.0.1:4567/log';
 
-    var task_id = 5;
+	var task_id = 5;
     var worker_code = <%= @worker %>; //FUNCION MAP DADA POR EL INVESTIGADOR
 
     var data = <%= @data %>;
 
     var result = {}; 
 
-	var blob = new Blob([worker_code], { type: "application/javascript" });
-	var worker = new Worker(window.URL.createObjectURL(blob));
+    var blob = new Blob([worker_code], { type: "application/javascript" });
+    var worker = new Worker(window.URL.createObjectURL(blob));
 
-	function log_to_server (msg) {
-		alert(msg);
-		/* Loggeo en el server. */
-		$.ajax(log_url, {
-			crossDomain: true,
-			dataType: 'json',
-			type: "POST",
-			data : {
-				message: msg,
-				task_id: task_id
-			}
-		});
-	}
+    function log_to_server (msg) {
+    	alert(msg);
+    	/* Loggeo en el server. */
+    	$.ajax(log_url, {
+    		crossDomain: true,
+    		dataType: 'json',
+    		type: "POST",
+    		data : {
+    			message: msg,
+    			task_id: task_id
+    		}
+    	});
+    }
 
-	function send_result () {
+    function send_result () {
 		/* 
 			It sends the results to the server and
 			retrieve data for further proccess.
@@ -45,29 +44,30 @@ $(function() {
 				type: 'POST',
 				data : result
 			}).done(function (data, textStatus, jqXHR) {
-				/* <data> is a raw string conatainig more data. */
+				
+				/* <data> is a json object conatainig more data. */
+				
 				result = {};
-				try {
-					
-				process_response(data);
+				
+				try {					
+					process_response(data);
 
-			} catch (err) {
-				log_to_server(err.message);
-			}			
+				} catch (err) {
+					log_to_server(err.message);
+				}			
 
-		}).fail(function (jqXHR, textStatus, errorThrown) {
-			alert("fail");
-			log_to_server(errorThrown);
-		});
-	}
+			}).fail(function (jqXHR, textStatus, errorThrown) {
+				alert("Cannot parse data as json");
+				log_to_server(errorThrown);
+			});
+		}
 
-	function process_response (json) {
-		/*
+		function process_response (json) {
+			/*
 			It sets the global vars to be ready to proccess the new work unit
 			*/
 			try {
 				if(json.type == 'new_data'){
-					
 					data = json;
 					worker.postMessage(data);	
 				}
@@ -77,47 +77,37 @@ $(function() {
 				}
 				else if(json.type == 'new_worker'){
 					data = json;
-
 					worker.terminate();
 					worker_code = data.worker;
 					blob = new Blob([worker_code], { type: "application/javascript" });
 					worker = new Worker(window.URL.createObjectURL(blob));
 					
-
 					worker.onmessage = function (evnt) {
 						msg = evnt.data;
 
-						if(msg.type == "send_result") {
-							
+						if(msg.type == "send_result") {							
 							send_result();
-
-						} else if (msg.type == "add_result") {
+						}
+						else if (msg.type == "add_result") {
 							for(key in msg.args){
 								add_result(key,msg.args[key]);
 							}
 						}
-
-					}
-					
-					worker.postMessage(data);
-					
+					}					
+					worker.postMessage(data);					
 				}
 				else{
 					alert(json.type);
 				}
-				
-
 
 			} catch (err) {
-		
-
 				throw new Error("FATAL: " + err.message);	
 			}
 
 		}
 
 		function add_result (key, value) {
-		/*
+			/*
 			Funcion llamada para agregar datos a enviar al server
 			*/
 			if(result[key]) {
@@ -134,9 +124,7 @@ $(function() {
 				result[key] = value;
 			}
 
-		}	
-
-		
+		}		
 
 		worker.onmessage = function (evnt) {
 			msg = evnt.data;
@@ -153,6 +141,7 @@ $(function() {
 			}
 
 		}
+
 		if(data != [] && worker_code != ''){
 			worker.postMessage(data);
 		}
