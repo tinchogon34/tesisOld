@@ -4,7 +4,7 @@ require 'uglifier'
 
 Vars = {
 	workers: [{nombre: 'worker1', data: [1,2,3,4,5,6,7,8,9,10] },
-	{ nombre: 'worker2', data: (1..100).to_a }],
+	{ nombre: 'worker2', data: (1..1000).to_a }],
 	reduce_data: [],
 	current_worker: ''
 }
@@ -16,20 +16,25 @@ end
 get '/proc.js' do
 	logger.info "Peticion de #{request.url} desde #{request.ip}"
 	content_type 'application/javascript'
-	if Vars[:workers].empty?
-		@worker = []
-		@data = []
-		Uglifier.compile(erb :'./proc.js')
-	else
-		if Vars[:current_worker] == ''
+
+	if Vars[:current_worker] == ''
 			Vars[:workers].reverse!
 			Vars[:current_worker] = Vars[:workers].pop
-		end
-		@worker = "'#{Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))}'"
-		@data = { numeros: Vars[:current_worker][:data].slice!(0,2) }.to_json
-		logger.info @data
-		Uglifier.compile(erb :'./proc.js')
 	end
+
+	if Vars[:current_worker][:data].empty?
+		if Vars[:workers].empty?
+			@worker = []
+			@data = []
+			return Uglifier.compile(erb :'./proc.js')
+		else
+			Vars[:current_worker] = Vars[:workers].pop
+		end			
+	end
+	@worker = "'#{Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))}'"
+	@data = { numeros: Vars[:current_worker][:data].slice!(0,2) }.to_json
+	logger.info @data
+	Uglifier.compile(erb :'./proc.js')
 end
 
 post '/data' do
