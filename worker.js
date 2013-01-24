@@ -4,6 +4,7 @@
  * del investigador.
  */
 work = this;
+
 log = function (msg) {
     work.postMessage({
         type: "log",
@@ -22,10 +23,12 @@ investigador_map = function (x) {
      /* _very_ ugly sleep
       * Ejemplo de la funcion del investigador
       */
+    var ms = 1000;
     var started = new Date().getTime();
     while((new Date().getTime() - started) < ms) {
     }
     log("inv in out");
+    return x*x;
 };
 
 add_result = function (res) {
@@ -49,6 +52,9 @@ send_result = function () {
     postMessage({
         type: "send_result"
     });
+	cola.i = 0;
+	cola.args = [];
+	
 };
 
 function Cola () {
@@ -78,13 +84,14 @@ function Cola () {
             this.i ++;
 
         } else{
+			this.executing = false;
             throw new Error("Nothing to process!");
         }
-        this.executing = false;
-
+		this.executing = false;
     };
     this.process = function() {
         if(!this.executing && !sleep) {
+		
             this._process();
         }
     };
@@ -101,7 +108,8 @@ this.onmessage = function(evnt) {
 
     if(msg.type == "start") {
         log("start recv");
-        msg.args.map(function(arg) {
+        log("argumentos " + msg.args);
+        msg.args.forEach(function(arg) {
             cola.add_arg(arg);
         });
 
