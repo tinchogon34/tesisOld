@@ -119,7 +119,7 @@ this.onmessage = function(evnt) {
       log("resume recv");
       sleep = false;
       try {
-        setInterval(cola.process(), 250);
+        setInterval(cola.process(), 50);
       } catch (err) {
         log(err.message);
         send_result();

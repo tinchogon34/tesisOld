@@ -9,13 +9,15 @@ Vars = {
 			data: [1,2,3,4,5,6,7,8,9,10],
 			task_id: 1,
 			slices: nil,
-			current_slice: 0}
-			],
-			reduce_data: [],
-			current_worker: nil
+			current_slice: 0,
+			worker_code: nil
+		}],
+	reduce_data: [],
+	current_worker: nil
 }
 
 def get_slices(arr, cant)
+	# DE [1,2,3,4,5,6,7,8,9,10] OBTENGO [[1,2,3],[4,5,6],[7,8,9],[10]]
 	slices = []
 	while !arr.empty? do
 		slices.push arr.slice!(0, cant)
@@ -24,6 +26,7 @@ def get_slices(arr, cant)
 end
 
 def init_worker
+	Vars[:current_worker][:worker_code] = Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
 	Vars[:current_worker][:slices] = get_slices(Vars[:current_worker][:data], 3).shuffle
 end
 
@@ -34,34 +37,20 @@ def get_work_or_data
 		if Vars[:workers].empty?
 			return { task_id: 0 }.to_json
 		# SINO OBTENER Y MANDAR UN NUEVO WORKER
-	else
-		Vars[:current_worker] = Vars[:workers].pop
-		init_worker
-		@slice_id = Vars[:current_worker][:current_slice]
-		Vars[:current_worker][:slice_id] += 1		
-		return { task_id: Vars[:current_worker][:task_id],
-			slice_id: @slice_id,
-			data: Vars[:current_worker][:slices][@slice_id],
-			worker: Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
-			}.to_json
+		else
+			Vars[:current_worker] = Vars[:workers].pop
+			init_worker
 		end
-	else
+	end
 	# SI HAY MAS INFO QUE PROCESAR, ENVIARLA
 	@slice_id = Vars[:current_worker][:current_slice]
 	Vars[:current_worker][:current_slice] += 1
-	if(@slice_id == 0)
-		return { task_id: Vars[:current_worker][:task_id],
+	return { task_id: Vars[:current_worker][:task_id],
 			slice_id: @slice_id,
 			data: Vars[:current_worker][:slices][@slice_id],
-			worker: Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
-			}.to_json
-		else
-			return { task_id: Vars[:current_worker][:task_id],
-				slice_id: @slice_id,
-				data: Vars[:current_worker][:slices][@slice_id]
-				}.to_json
-			end
-		end
+			worker: Vars[:current_worker][:worker_code]
+	}.to_json		
+	
 end
 
 def enable_cross_domain
@@ -91,8 +80,12 @@ get '/proc.js' do
 end
 
 post '/data' do
-	enable_cross_domain    
-	get_work_or_data
+	enable_cross_domain
+
+	# ACA DEBERIA PROCESAR LOS DATOS
+	################################
+	
+	get_work_or_data # MANDAR MAS INFORMACION SI LA HAY
 end
 
 get '/work' do

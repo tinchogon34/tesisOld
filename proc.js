@@ -13,7 +13,7 @@ task_id = null;
 slice_id = null;
 worker_code = null;
 data = null;
-tiempo_de_ejecucion = 2000;
+tiempo_de_ejecucion = 500;
 get_work_interval = null;
 /* }}} */
 
