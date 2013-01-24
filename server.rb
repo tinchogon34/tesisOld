@@ -2,7 +2,7 @@ require 'sinatra'
 require 'json'
 require 'uglifier'
 
-set :trusted_hosts, ['http://dwc.com:4567']
+set :trusted_hosts, ['http://localhost:4567']
 set :protection, origin_whitelist: settings.trusted_hosts
 
 Vars = {
