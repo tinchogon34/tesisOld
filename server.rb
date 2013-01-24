@@ -5,14 +5,14 @@ require 'uglifier'
 Vars = {
 	workers: [
 		{
-		nombre: 'worker',
-		data: [1,2,3,4,5,6,7,8,9,10],
-		task_id: 1,
-		slices: nil,
-		current_slice: 0}
-		],
-	reduce_data: [],
-	current_worker: nil
+			nombre: 'worker',
+			data: [1,2,3,4,5,6,7,8,9,10],
+			task_id: 1,
+			slices: nil,
+			current_slice: 0}
+			],
+			reduce_data: [],
+			current_worker: nil
 }
 
 def get_slices(arr, cant)
@@ -28,40 +28,48 @@ def init_worker
 end
 
 def get_work_or_data
-	# SI EL WORKER NO TIENE MAS INFO QUE PROCESAR
+# SI EL WORKER NO TIENE MAS INFO QUE PROCESAR
 	if Vars[:current_worker][:current_slice] >= Vars[:current_worker][:slices].size
-			# SI NO QUEDAN MAS WORKERS, DAR SIGNAL DE FINALIZAR
-			if Vars[:workers].empty?
-				return { task_id: 0 }.to_json
-			# SINO OBTENER Y MANDAR UN NUEVO WORKER
-			else
-				Vars[:current_worker] = Vars[:workers].pop
-				init_worker
-				@slice_id = Vars[:current_worker][:current_slice]
-				Vars[:current_worker][:slice_id] += 1		
-				return { task_id: Vars[:current_worker][:task_id],
-					slice_id: @slice_id,
-					data: Vars[:current_worker][:slices][@slice_id],
-					worker: Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
-				}.to_json
-			end
+		# SI NO QUEDAN MAS WORKERS, DAR SIGNAL DE FINALIZAR
+		if Vars[:workers].empty?
+			return { task_id: 0 }.to_json
+		# SINO OBTENER Y MANDAR UN NUEVO WORKER
 	else
-		# SI HAY MAS INFO QUE PROCESAR, ENVIARLA
+		Vars[:current_worker] = Vars[:workers].pop
+		init_worker
 		@slice_id = Vars[:current_worker][:current_slice]
-		Vars[:current_worker][:current_slice] += 1
-		if(@slice_id == 0)
-			return { task_id: Vars[:current_worker][:task_id],
-				slice_id: @slice_id,
-				data: Vars[:current_worker][:slices][@slice_id],
-				worker: Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
+		Vars[:current_worker][:slice_id] += 1		
+		return { task_id: Vars[:current_worker][:task_id],
+			slice_id: @slice_id,
+			data: Vars[:current_worker][:slices][@slice_id],
+			worker: Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
+			}.to_json
+		end
+	else
+	# SI HAY MAS INFO QUE PROCESAR, ENVIARLA
+	@slice_id = Vars[:current_worker][:current_slice]
+	Vars[:current_worker][:current_slice] += 1
+	if(@slice_id == 0)
+		return { task_id: Vars[:current_worker][:task_id],
+			slice_id: @slice_id,
+			data: Vars[:current_worker][:slices][@slice_id],
+			worker: Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
 			}.to_json
 		else
 			return { task_id: Vars[:current_worker][:task_id],
 				slice_id: @slice_id,
 				data: Vars[:current_worker][:slices][@slice_id]
-			}.to_json
+				}.to_json
+			end
 		end
-	end
+end
+
+def enable_cross_domain
+	response['Content-Type'] = 'application/json'
+	response['Access-Control-Allow-Origin'] = '*'
+	response['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
+	response['Access-Control-Max-Age'] = '1000'
+	response['Access-Control-Allow-Headers'] = 'Content-Type'
 end
 
 get '/' do
@@ -72,7 +80,7 @@ get '/proc.js' do
 	logger.info "Peticion de #{request.url} desde #{request.ip}"
 	content_type 'application/javascript'
 
-	# LA PRIMERA VEZ QUE CUALQUIERA PIDE /PROC
+# LA PRIMERA VEZ QUE CUALQUIERA PIDE /PROC
 	if Vars[:current_worker] == nil
 		Vars[:workers].reverse!
 		Vars[:current_worker] = Vars[:workers].pop
@@ -83,33 +91,16 @@ get '/proc.js' do
 end
 
 post '/data' do
-	# HABILITAR CROSS-ORIGIN-REQUESTS
-	response['Content-Type'] = 'application/json'
-	response['Access-Control-Allow-Origin'] = '*'
-	response['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
-	response['Access-Control-Max-Age'] = '1000'
-	response['Access-Control-Allow-Headers'] = 'Content-Type'
-    
+	enable_cross_domain    
 	get_work_or_data
 end
 
 get '/work' do
-	# HABILITAR CROSS-ORIGIN-REQUESTS
-	response['Content-Type'] = 'application/json'
-	response['Access-Control-Allow-Origin'] = '*'
-	response['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
-	response['Access-Control-Max-Age'] = '1000'
-	response['Access-Control-Allow-Headers'] = 'Content-Type'
-	
+	enable_cross_domain	
 	get_work_or_data
 end
 
 post '/log' do
-	response['Content-Type'] = 'text/plain'
-	response['Access-Control-Allow-Origin'] = '*'
-	response['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
-	response['Access-Control-Max-Age'] = '1000'
-	response['Access-Control-Allow-Headers'] = 'Content-Type'
-
+	enable_cross_domain
 	puts params[:data][:message]
 end
