@@ -2,6 +2,9 @@ require 'sinatra'
 require 'json'
 require 'uglifier'
 
+set :trusted_hosts, ['http://dwc.com:4567']
+set :protection, origin_whitelist: settings.trusted_hosts
+
 Vars = {
 	workers: [
 		{
@@ -53,9 +56,9 @@ def get_work_or_data
 	
 end
 
-def enable_cross_domain
+def enable_cross_origin
 	response['Content-Type'] = 'application/json'
-	response['Access-Control-Allow-Origin'] = '*'
+	response['Access-Control-Allow-Origin'] = settings.trusted_hosts
 	response['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
 	response['Access-Control-Max-Age'] = '1000'
 	response['Access-Control-Allow-Headers'] = 'Content-Type'
@@ -80,7 +83,7 @@ get '/proc.js' do
 end
 
 post '/data' do
-	enable_cross_domain
+	enable_cross_origin
 
 	# ACA DEBERIA PROCESAR LOS DATOS
 	################################
@@ -89,11 +92,14 @@ post '/data' do
 end
 
 get '/work' do
-	enable_cross_domain	
-	get_work_or_data
+	enable_cross_origin
+
+	if settings.trusted_hosts.include?(request.env['HTTP_ORIGIN']) || request.xhr?	
+		return get_work_or_data
+	end	
 end
 
 post '/log' do
-	enable_cross_domain
-	puts params[:data][:message]
+	enable_cross_origin
+	puts params[:message]
 end

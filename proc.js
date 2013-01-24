@@ -13,8 +13,9 @@ task_id = null;
 slice_id = null;
 worker_code = null;
 data = null;
-tiempo_de_ejecucion = 500;
+tiempo_de_ejecucion = 1000;
 get_work_interval = null;
+get_work_running = false;
 /* }}} */
 
 /* worker vars */
@@ -37,7 +38,6 @@ get_work = function(){
 				}
 
 			}).fail(function (jqXHR, textStatus, errorThrown) {
-				alert("FAIL: Cannot parse data as json");
 				log_to_server(errorThrown);
 			});
 }
@@ -78,7 +78,6 @@ send_result = function () {
  	}
 
  }).fail(function (jqXHR, textStatus, errorThrown) {
- 	alert("FAIL: Cannot parse data as json");
  	log_to_server(errorThrown);
  });
 };
@@ -90,21 +89,24 @@ process_response = function(json) {
  * start_worker()
  */
  try {
-	console.log(json);
+
  	/* manejar cuando no hay mas trabajo */
  	result = [];
  	if(json.task_id == 0) {		
-		if(!get_work_interval)
+		if(!get_work_running){
+			get_work_running = true;
 			log("Esperando nuevos trabajos...");
-			get_work_interval = setInterval("get_work()",5000);
+			get_work_interval = setInterval("get_work()",5000);}
  		return;
  	}
  	/* Es el mismo worker? */
  	else if(task_id == json.task_id) {
 		clearInterval(get_work_interval);
+		get_work_running = false;
  		data = json.data;		
  	} else {
 		clearInterval(get_work_interval);
+		get_work_running = false;
  		task_id = json.task_id;
  		data = json.data;
  		worker_code = json.worker;
