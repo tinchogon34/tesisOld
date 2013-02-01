@@ -1,8 +1,11 @@
 require 'sinatra'
 require 'json'
 require 'uglifier'
+require 'mongo'
 
-set :trusted_hosts, ['http://localhost:4567']
+include Mongo
+
+set :trusted_hosts, ['http://127.0.0.1:4567']
 set :protection, origin_whitelist: settings.trusted_hosts
 
 Vars = {
@@ -19,6 +22,17 @@ Vars = {
 	current_worker: nil
 }
 
+def init_worker
+	# LA PRIMERA VEZ QUE CUALQUIERA PIDE /PROC
+	if Vars[:current_worker] == nil
+		Vars[:workers].reverse!
+		Vars[:current_worker] = Vars[:workers].pop
+	end
+
+	Vars[:current_worker][:worker_code] = Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
+	Vars[:current_worker][:slices] = get_slices(Vars[:current_worker][:data], 3).shuffle
+end
+
 def get_slices(arr, cant)
 	# DE [1,2,3,4,5,6,7,8,9,10] OBTENGO [[1,2,3],[4,5,6],[7,8,9],[10]]
 	slices = []
@@ -26,11 +40,6 @@ def get_slices(arr, cant)
 		slices.push arr.slice!(0, cant)
 	end
 	slices
-end
-
-def init_worker
-	Vars[:current_worker][:worker_code] = Uglifier.compile(File.read("#{Vars[:current_worker][:nombre]}.js"))
-	Vars[:current_worker][:slices] = get_slices(Vars[:current_worker][:data], 3).shuffle
 end
 
 def get_work_or_data
@@ -72,13 +81,6 @@ get '/proc.js' do
 	logger.info "Peticion de #{request.url} desde #{request.ip}"
 	content_type 'application/javascript'
 
-# LA PRIMERA VEZ QUE CUALQUIERA PIDE /PROC
-	if Vars[:current_worker] == nil
-		Vars[:workers].reverse!
-		Vars[:current_worker] = Vars[:workers].pop
-		init_worker
-	end
-	
 	Uglifier.compile(File.read('./proc.js'))
 end
 
@@ -103,3 +105,5 @@ post '/log' do
 	enable_cross_origin
 	puts params[:message]
 end
+
+init_worker

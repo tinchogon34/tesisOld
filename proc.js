@@ -40,7 +40,7 @@ get_work = function(){
 			}).fail(function (jqXHR, textStatus, errorThrown) {
 				log_to_server(errorThrown);
 			});
-}
+};
 
 log_to_server = function (msg) {
 	/* Loggeo en el server. */
