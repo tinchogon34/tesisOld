@@ -12,17 +12,17 @@ log = function (msg) {
     args: msg
   });
 };
-
+/*
 investigador_map = function (x) {
   log("inv in");
   /*
    * Funcion provista por el investigador.
    * Debemos tener una estimacion de cuanto tiempo necesita
    * Dinamico!
-   */
+  
    /* _very_ ugly sleep
     * Ejemplo de la funcion del investigador
-    */
+  
   var ms = 1000;
   var started = new Date().getTime();
   while((new Date().getTime() - started) < ms) {
@@ -30,7 +30,7 @@ investigador_map = function (x) {
   log("inv in out");
   return x*x;
 };
-
+*/
 add_result = function (res) {
 /*
  * Envia un mensaje <add_result>
