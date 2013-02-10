@@ -1,12 +1,12 @@
 require 'sinatra'
 require 'json'
-require 'uglifier'
 require 'mongo'
 
 include Mongo
 
 set :db, nil
 set :workers, nil
+set :worker_code, File.read("worker.js")
 set :trusted_hosts, ['http://127.0.0.1:4567']
 set :protection, origin_whitelist: settings.trusted_hosts
 
@@ -50,7 +50,7 @@ def get_work_or_data
 	return { task_id: worker_id,
 			slice_id: current_slice,
 			data: worker["slices"][current_slice],
-			worker: worker["worker_code"]
+			worker: worker["worker_code"] + ";" + settings.worker_code
 	}.to_json	
 
 end
@@ -75,7 +75,7 @@ get '/proc.js' do
 	logger.info "Peticion de #{request.url} desde #{request.ip}"
 	content_type 'application/javascript'
 
-	Uglifier.compile(File.read('./proc.js'))
+	send_file './proc.js'
 end
 
 get '/work' do
@@ -88,6 +88,12 @@ end
 
 post '/data' do
 	enable_cross_origin
+
+	doc_id = params[:task_id]
+	current_slice = params[:current_slice]
+	results = params[:result]
+
+	worker = settings.db["workers"].find({"_id" => doc_id})
 
 	# ACA DEBERIA PROCESAR LOS DATOS
 	################################
@@ -103,7 +109,7 @@ post '/form' do
 	coll = settings.db.collection("workers")
 	doc = {
 		data: data["dummy"].flatten,
-		worker_code: Uglifier.compile(map + ";" + File.read("worker.js")),
+		worker_code: "investigador_map = " + map,
 		reduce: reduce,
 		result: [],
 		slices: get_slices(data["dummy"], 3),
@@ -112,10 +118,8 @@ post '/form' do
 		}
 
 	doc_id = coll.insert(doc)
-	doc["_id"] = doc_id
-	settings.workers.push settings.db["workers"].find({"_id" => doc_id}).to_s
-	print settings.workers
-	redirect '/'
+	settings.workers.push(settings.db["workers"].find({"_id" => doc_id}).to_a).flatten!
+	"Thx for submitting a job"
 end
 
 post '/log' do
