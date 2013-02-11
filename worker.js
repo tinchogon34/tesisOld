@@ -4,7 +4,9 @@
  * del investigador.
  */
 work = this;
-sleep = true;
+sleep = false;
+intervalId = null;
+
 
 log = function (msg) {
   work.postMessage({
@@ -15,14 +17,6 @@ log = function (msg) {
 /*
 investigador_map = function (x) {
   log("inv in");
-  /*
-   * Funcion provista por el investigador.
-   * Debemos tener una estimacion de cuanto tiempo necesita
-   * Dinamico!
-  
-   /* _very_ ugly sleep
-    * Ejemplo de la funcion del investigador
-  
   var ms = 1000;
   var started = new Date().getTime();
   while((new Date().getTime() - started) < ms) {
@@ -30,6 +24,15 @@ investigador_map = function (x) {
   log("inv in out");
   return x*x;
 };
+*/
+/*
+reduce
+function (res) {
+var total = res.reduce(function(a, b) {
+    return parseInt(a) + parseInt(b);
+});
+return total;
+};    
 */
 add_result = function (res) {
 /*
@@ -48,6 +51,7 @@ send_result = function () {
   /*
    * Envia un mensaje <send_result>
    */
+   clearInterval(intervalId);
    log("send_result worker");
    postMessage({
       type: "send_result"
@@ -110,21 +114,35 @@ this.onmessage = function(evnt) {
       msg.args.forEach(function(arg) {
         cola.add_arg(arg);
       });
+      intervalId = setInterval(function(){
+        try {
+          cola.process();
+        }
+        catch (err) {
+          log(err.message);
+          send_result();
+      }},50);
+      
 
     } else if(msg.type == "pause") {
-      log("pause recv");
       sleep = true;
-
-    } else if(msg.type == "resume") {
-      log("resume recv");
-      sleep = false;
-      try {
-        setInterval(cola.process(), 50);
-      } catch (err) {
-        log(err.message);
-        send_result();
-      }
-    }
+      clearInterval(intervalId);
+      log("pause recv");
+      setTimeout(function(){
+        sleep = false;
+        log("resume recv");
+        intervalId = setInterval(function(){
+        try {
+          cola.process();
+        }
+        catch (err) {
+          log(err.message);
+          send_result();
+        }},50);
+        
+      },msg.sleep_time);
+      
+    } 
   };
 
 work.postMessage("termino worker");

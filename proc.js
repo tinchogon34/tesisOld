@@ -13,7 +13,8 @@ task_id = null;
 slice_id = null;
 worker_code = null;
 data = null;
-tiempo_de_ejecucion = 1000;
+tiempo_de_ejecucion = 5000;
+sleep_time = 2500;
 get_work_interval = null;
 get_work_running = false;
 /* }}} */
@@ -24,6 +25,8 @@ worker = null;
 intervalId = null;
 pause = true;
 result = []; /* data send */
+
+
 
 get_work = function(){
 	$.ajax(work_url, {
@@ -110,6 +113,7 @@ process_response = function(json) {
  		task_id = json.task_id;
  		data = json.data;
  		worker_code = json.worker;
+ 		console.log(worker_code);
  		create_worker();
  	}
  	slice_id = json.slice_id;
@@ -126,11 +130,17 @@ log = function(line) {
 
 
 toggle_pause = function () {
-	pause = !pause;
+	
+	clearInterval(intervalId);
+
 	worker.postMessage({
-		type: pause ? "pause": "resume"
+		type: "pause",
+		sleep_time: sleep_time
 	});
-	log((pause ? "pause": "resume") + " send");
+	log("pause" + " send");
+
+	intervalId = setInterval(toggle_pause, tiempo_de_ejecucion);
+
 
 };
 
@@ -145,10 +155,11 @@ create_worker = function () {
  worker.onmessage = function (evnt) {
  	msg = evnt.data;
  	if(msg.type == "send_result") {
+ 		clearInterval(intervalId);
  		log("send_result recv");
  		log("enviando data " + result);
  		send_result(); /* send results and receive new data to process */
- 		clearInterval(intervalId);
+ 		
 
  	} else if (msg.type == "add_result") { /* nose si esto esta bien */
 
@@ -170,14 +181,14 @@ start_worker = function () {
  * Crea el temporalizado que pausara al worker y
  * lo inicia.
  */
- intervalId = setInterval(function () {
- 	toggle_pause();
- }, tiempo_de_ejecucion);
+ 
 
  worker.postMessage({
  	type: "start",
  	args: data
  });
+
+ intervalId = setInterval(toggle_pause, tiempo_de_ejecucion);
 };
 
 /* document ready */

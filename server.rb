@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'json'
 require 'mongo'
+require 'v8'
 
 include Mongo
 
@@ -12,7 +13,8 @@ set :protection, origin_whitelist: settings.trusted_hosts
 
 def init
 	settings.db = MongoClient.new("localhost").db("tesis")
-	settings.workers = settings.db["workers"].find({"status" => {"$ne" => "terminado"}}).to_a
+	settings.workers = settings.db["workers"].find({"status" => "created"}).to_a
+	process_pending
 end
 
 def get_slices(arr, cant)
@@ -33,8 +35,9 @@ def get_work_or_data
 	worker = settings.workers.sample
 
 	while(worker["current_slice"] >= worker["slices"].size)
-		worker["status"] = 'terminado'
+		worker["status"] = 'reduce_pending'
 		settings.db["workers"].update({"_id" => worker["_id"]}, worker)
+		process_pending
 		settings.workers.delete worker
 		if settings.workers.empty?
 			return { task_id: 0 }.to_json
@@ -53,6 +56,17 @@ def get_work_or_data
 			worker: worker["worker_code"] + ";" + settings.worker_code
 	}.to_json	
 
+end
+
+def process_pending
+	pending = settings.db["workers"].find({"status" => "reduce_pending"}).to_a
+	cxt = V8::Context.new
+	pending.each do |worker|
+		cxt["res"] = worker["result"]
+		worker["result"] = cxt.eval("investigador_reduce = " + worker["reduce"] + ";investigador_reduce(res)")
+		worker["status"] = "finished"
+		settings.db["workers"].update({"_id" => worker["_id"]}, worker)
+	end
 end
 
 def enable_cross_origin
@@ -93,16 +107,14 @@ post '/data' do
 	current_slice = params[:current_slice]
 	results = params[:result]
 
-	worker = settings.db["workers"].find({"_id" => doc_id})
-
-	# ACA DEBERIA PROCESAR LOS DATOS
-	################################
-	
+	settings.db["workers"].update({"_id" => BSON::ObjectId(doc_id)}, '$pushAll' => { :result => results})
+	settings.workers = settings.db["workers"].find({"status" => "created"}).to_a
 	get_work_or_data # MANDAR MAS INFORMACION SI LA HAY
 end
 
 post '/form' do
 	data = JSON.parse "{ \"dummy\": [#{params[:data].gsub("'","\"")}] }"
+	print params[:data]
 	map = params[:map]
 	reduce = params[:reduce]
 
@@ -118,7 +130,7 @@ post '/form' do
 		}
 
 	doc_id = coll.insert(doc)
-	settings.workers.push(settings.db["workers"].find({"_id" => doc_id}).to_a).flatten!
+	settings.workers.push(settings.db["workers"].find({"_id" => doc_id}).first)
 	"Thx for submitting a job"
 end
 
