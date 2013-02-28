@@ -1,8 +1,3 @@
-require 'sinatra'
-require 'json'
-require 'mongo'
-require 'v8'
-
 include Mongo
 
 set :db, nil
