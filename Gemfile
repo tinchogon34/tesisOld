@@ -1,6 +1,5 @@
 source 'https://rubygems.org'
-
-gem 'sinatra'
+gem "sinatra", :require => "sinatra/base"
 gem 'mongo'
 gem 'bson_ext'
 gem 'thin'
