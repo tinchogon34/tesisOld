@@ -8,20 +8,20 @@ $(function() {
   log_url = 'http://localhost:4567/log';
   work_url = 'http://localhost:4567/work';
 
+  tiempo_de_ejecucion = 5000;
+  sleep_time = 2500;
+  worker = null;
+  
   /* Globals vars here! It is a dynamic content {{{ */
   task_id = null;
   slice_id = null;
   worker_code = null;
   data = null;
-  tiempo_de_ejecucion = 5000;
-  sleep_time = 2500;
   get_work_interval = null;
   get_work_running = false;
-  /* }}} */
 
   /* worker vars */
   blob = null;
-  worker = null;
   intervalId = null;
   pause = true;
 
@@ -83,7 +83,6 @@ $(function() {
 
     result = pre_reduce_result(result); //[["0",1],["0",2],["2",3]] => // {"llave"=>["1", "1", "4"]}
   
-    console.log(result);
     $.ajax(post_url, {
       async: false,
       dataType: "json",
@@ -118,10 +117,11 @@ $(function() {
     try {
 
       /* manejar cuando no hay mas trabajo */
-      if(json.task_id == 0) {		
-        console.log("entre al task 0");
+      if(json.task_id == 0) {
+        worker.terminate();
+        task_id = null;    
         if(!get_work_running){
-          wait_for_new_tasks();  
+          wait_for_new_tasks();
         }
         return;
       }
@@ -132,7 +132,6 @@ $(function() {
       data = json.data;
       slice_id = json.slice_id;
       if(task_id != json.task_id) {
-        console.log("entre al distinto");
         task_id = json.task_id;
         worker_code = json.worker;
         create_worker();

@@ -52,6 +52,7 @@ send_result = function () {
     type: "send_result",
     args: result
   });
+  result = [ [] ];
 };
 
 function Cola () {
@@ -80,14 +81,21 @@ function Cola () {
       this.i ++;
 
     } else{
+      this.i = 0;
+      this.executing = false;
       throw new Error("Nothing to process!");
     }
     this.executing = false;
 
+
   };
 
   this.process = function() {
+    //log("casi e ntro");
+    //log("executing " + this.executing);
+    //log("sleep " + sleep);
     if(!this.executing && !sleep) {
+      //log("entre");
       this._process();
     }
   };

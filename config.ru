@@ -6,3 +6,4 @@ Bundler.require
 require './server'
 set :environment, :production
 run Sinatra::Application
+
