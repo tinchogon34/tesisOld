@@ -6,7 +6,7 @@
 work = this;
 sleep = false;
 intervalId = null;
-
+result = [ [] ]; //[["0",1],["1",2],["2",3]]
 
 log = function (msg) {
   work.postMessage({
@@ -14,53 +14,47 @@ log = function (msg) {
     args: msg
   });
 };
+
 /*
-investigador_map = function (x) {
+investigador_map = function (k, v) {
   log("inv in");
   var ms = 1000;
   var started = new Date().getTime();
   while((new Date().getTime() - started) < ms) {
   }
+  emit("llave", v*v);
   log("inv in out");
-  return x*x;
 };
 */
+
 /*
-reduce
-function (res) {
-var total = res.reduce(function(a, b) {
+investigador_reduce = function (k, vals) {
+  var total = vals.reduce(function(a, b) {
     return parseInt(a) + parseInt(b);
-});
-return total;
+  });
+  return total;
 };    
 */
-add_result = function (res) {
-/*
- * Envia un mensaje <add_result>
- */
- log("add_result send");
- if(res != null || res == undefined) {
-    postMessage({
-      type: "add_result",
-      args: res
-    });
-  }
+
+
+emit = function (key, val) {
+  /* funcion utilizada en investigador_map para agregar valores */
+  var arr = result[result.length - 1];
+  arr.push([key, val]);
 };
 
 send_result = function () {
-  /*
-   * Envia un mensaje <send_result>
-   */
-   clearInterval(intervalId);
-   log("send_result worker");
-   postMessage({
-      type: "send_result"
-    });
-   cola.i = 0;
-   cola.args = [];
+  /* Envia un mensaje <send_result>
+  */
+  log("send_result worker");
+  log(result);
+  postMessage({
+    type: "send_result",
+    args: result
+  });
 };
 
- function Cola () {
+function Cola () {
   /* <Humilde intento de clase en JS :'(>
    * Recibe todos los datos que necesita la funcion map.
    * Luego los ejecuta en orden realizando llamadas a la
@@ -70,29 +64,29 @@ send_result = function () {
    * tareas.
    */
 
-   this.func = null;
-   this.i = 0;
-   this.args = [];
-   this.executing = false;
-
-   this.add_arg = function (arg) {
-      this.args[this.args.length] = arg;
-      log("encolo " + arg);
-    };
+  this.map = null;
+  this.i = 0;
+  this.args = [];
+  this.executing = false;
 
   this._process = function() {
     this.executing = true;
     if(this.i < this.args.length) {
-      add_result(this.func(this.args[this.i]));
+      log("ejecutando map con " + this.args[this.i][0] + " y " + this.args[this.i][1]);
+      this.map(this.args[this.i][0],this.args[this.i][1]);
+      if(result[result.length] != 0) {
+        result.push([]);
+      }
       this.i ++;
-    } else{
-     this.executing = false;
-     throw new Error("Nothing to process!");
-   }
-   this.executing = false;
- };
 
- this.process = function() {
+    } else{
+      throw new Error("Nothing to process!");
+    }
+    this.executing = false;
+
+  };
+
+  this.process = function() {
     if(!this.executing && !sleep) {
       this._process();
     }
@@ -100,20 +94,32 @@ send_result = function () {
 }
 
 cola = new Cola();
-cola.func = investigador_map;
+cola.map = investigador_map;
 
 this.onmessage = function(evnt) {
-    /*
-     * Manejador de mensajes
-     */
-     msg = evnt.data;
+  /* Manejador de mensajes
+  */
+  msg = evnt.data;
 
-     if(msg.type == "start") {
-      log("start recv");
-      log("argumentos " + msg.args);
-      msg.args.forEach(function(arg) {
-        cola.add_arg(arg);
-      });
+  if(msg.type == "start") {
+    log("start recv");
+    cola.args = msg.args; // array de arrays [["0", 1], ["1", 2], ["2", 3]]
+    intervalId = setInterval(function(){
+      try {
+        cola.process();
+      }
+      catch (err) {
+        log(err.message);
+        send_result();
+      }},50);
+  }
+  else if(msg.type == "pause") {
+    sleep = true;
+    clearInterval(intervalId);
+    log("pause recv");
+    setTimeout(function(){
+      sleep = false;
+      log("resume recv");
       intervalId = setInterval(function(){
         try {
           cola.process();
@@ -121,28 +127,9 @@ this.onmessage = function(evnt) {
         catch (err) {
           log(err.message);
           send_result();
-      }},50);
-      
-
-    } else if(msg.type == "pause") {
-      sleep = true;
-      clearInterval(intervalId);
-      log("pause recv");
-      setTimeout(function(){
-        sleep = false;
-        log("resume recv");
-        intervalId = setInterval(function(){
-        try {
-          cola.process();
-        }
-        catch (err) {
-          log(err.message);
-          send_result();
         }},50);
-        
-      },msg.sleep_time);
-      
-    } 
-  };
+    },msg.sleep_time);
+  }
+};
 
 work.postMessage("termino worker");

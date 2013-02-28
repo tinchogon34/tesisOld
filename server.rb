@@ -18,12 +18,7 @@ def init
 end
 
 def get_slices(arr, cant)
-	# DE [1,2,3,4,5,6,7,8,9,10] OBTENGO [[1,2,3],[4,5,6],[7,8,9],[10]]
-	slices = []
-	while !arr.empty? do
-		slices.push arr.slice!(0, cant)
-	end
-	slices.shuffle
+  arr.each_slice(cant).to_a.shuffle
 end
 
 def get_work_or_data
@@ -49,7 +44,7 @@ def get_work_or_data
 	worker_id = worker["_id"].to_s
 	worker["current_slice"] += 1
 	settings.db["workers"].update({"_id" => worker["_id"]}, worker)
-
+  
 	return { task_id: worker_id,
 			slice_id: current_slice,
 			data: worker["slices"][current_slice],
@@ -62,10 +57,17 @@ def process_pending
 	pending = settings.db["workers"].find({"status" => "reduce_pending"}).to_a
 	cxt = V8::Context.new
 	pending.each do |worker|
-		cxt["res"] = worker["result"]
-		worker["result"] = cxt.eval("investigador_reduce = " + worker["reduce"] + ";investigador_reduce(res)")
+    #[{"llave"=>["1", "1", "4"]}]
+    worker["map_results"].each do |hash|
+      hash.each do |key, value|
+        cxt["k"] = key
+        cxt["v"] = value
+      end
+
+      worker["reduce_results"][key] = cxt.eval("investigador_reduce = " + worker["reduce"] + ";investigador_reduce(k, v)");
+		  settings.db["workers"].update({"_id" => worker["_id"]}, worker)
+    end
 		worker["status"] = "finished"
-		settings.db["workers"].update({"_id" => worker["_id"]}, worker)
 	end
 end
 
@@ -105,26 +107,29 @@ post '/data' do
 
 	doc_id = params[:task_id]
 	current_slice = params[:current_slice]
-	results = params[:result]
+	results = params[:result] #[["0",[1,2]],["2",[3]]
 
-	settings.db["workers"].update({"_id" => BSON::ObjectId(doc_id)}, '$pushAll' => { :result => results})
+	settings.db["workers"].update({"_id" => BSON::ObjectId(doc_id)}, '$push' => { :map_results => results})
 	settings.workers = settings.db["workers"].find({"status" => "created"}).to_a
 	get_work_or_data # MANDAR MAS INFORMACION SI LA HAY
 end
 
 post '/form' do
-	data = JSON.parse "{ \"dummy\": [#{params[:data].gsub("'","\"")}] }"
-	print params[:data]
+
+	data = JSON.parse params[:data].gsub("'","\"")
+  print data
+  print params[:data]
 	map = params[:map]
 	reduce = params[:reduce]
 
 	coll = settings.db.collection("workers")
 	doc = {
-		data: data["dummy"].flatten,
+		data: data,
 		worker_code: "investigador_map = " + map,
 		reduce: reduce,
-		result: [],
-		slices: get_slices(data["dummy"], 3),
+    map_results: [],
+		reduce_results: {},
+		slices: get_slices(data, 3),
 		current_slice: 0,
 		status: 'created'
 		}
