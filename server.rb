@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require 'sinatra'
 require 'json'
 require 'mongo'
@@ -43,7 +45,7 @@ def get_work_or_data
 			slice_id: current_slice,
 			data: worker["slices"][current_slice],
 			worker: worker["worker_code"] + ";" + settings.worker_code
-	}.to_json	
+	}.to_json
 
 end
 

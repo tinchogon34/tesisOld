@@ -46,6 +46,9 @@ emit = function (key, val) {
 send_result = function () {
   /* Envia un mensaje <send_result>
   */
+  sleep = true;  
+  cola.i = 0;
+
   log("send_result worker");
   log(result);
   postMessage({
@@ -81,21 +84,15 @@ function Cola () {
       this.i ++;
 
     } else{
-      this.i = 0;
       this.executing = false;
       throw new Error("Nothing to process!");
     }
-    this.executing = false;
-
+      this.executing = false;
 
   };
 
   this.process = function() {
-    //log("casi e ntro");
-    //log("executing " + this.executing);
-    //log("sleep " + sleep);
     if(!this.executing && !sleep) {
-      //log("entre");
       this._process();
     }
   };
@@ -110,6 +107,7 @@ this.onmessage = function(evnt) {
   msg = evnt.data;
 
   if(msg.type == "start") {
+    sleep = false;
     log("start recv");
     cola.args = msg.args; // array de arrays [["0", 1], ["1", 2], ["2", 3]]
     intervalId = setInterval(function(){
@@ -135,7 +133,7 @@ this.onmessage = function(evnt) {
         catch (err) {
           log(err.message);
           send_result();
-        }},50);
+        }},250);
     },msg.sleep_time);
   }
 };

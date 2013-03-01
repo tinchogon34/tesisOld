@@ -1,9 +1,8 @@
-require 'rubygems'
-require 'bundler'
 
-Bundler.require
+require 'rubygems'
 
 require './server'
 set :environment, :production
+
 run Sinatra::Application
 
