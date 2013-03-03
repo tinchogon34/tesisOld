@@ -9,7 +9,7 @@ include Mongo
 set :db, nil
 set :workers, nil
 set :worker_code, File.read("worker.js")
-set :trusted_hosts, ['http://gubu.com.ar']
+set :trusted_hosts, ['http://localhost:4567']
 set :protection, origin_whitelist: settings.trusted_hosts
 
 def init
