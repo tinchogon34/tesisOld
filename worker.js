@@ -33,7 +33,7 @@ investigador_reduce = function (k, vals) {
     return parseInt(a) + parseInt(b);
   });
   return total;
-};    
+};
 */
 
 
@@ -46,7 +46,7 @@ emit = function (key, val) {
 send_result = function () {
   /* Envia un mensaje <send_result>
   */
-  sleep = true;  
+  sleep = true;
   cola.i = 0;
 
   log("send_result worker");
@@ -85,7 +85,7 @@ function Cola () {
 
     } else{
       this.executing = false;
-      throw new Error("Nothing to process!");
+      throw new Error("<b>Nothing to process!</b>");
     }
       this.executing = false;
 

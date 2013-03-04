@@ -205,7 +205,7 @@ $(function() {
 
     wait_for_new_tasks = function () {
         get_work_running = true;
-        log("Esperando nuevos trabajos...");
+        log("<a style='color:red'>Esperando nuevos trabajos...</a>");
         get_work_interval = setInterval("get_work()", 5000);
     };
 
