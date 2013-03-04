@@ -122,7 +122,7 @@ $(function() {
                 if(worker != null){
                     worker.terminate();
                 }
-                task_id = null;    
+                task_id = null;
                 if(!get_work_running){
                     wait_for_new_tasks();
                 }
