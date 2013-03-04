@@ -22,11 +22,11 @@ def process
 end
 
 def pre_reduce_map(map_results)
- #[{"llave" : ["1","1","4"]},{"llave" : ["9"]}] => [{"llave" => ["1","1","4","9"]}]
+ #{1 => {"llave" : ["1","1","4"]}, 2 =>{"llave" : ["9"]}} => {"llave" => ["1","1","4","9"]}
 
  h = {}
- map_results.each do |hash|
-   hash.each do |key, value|
+ map_results.each do |k, v|
+   v.each do |key, value|
      if(!h[key])
        h[key] = value
      else

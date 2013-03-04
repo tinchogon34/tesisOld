@@ -83,10 +83,10 @@ end
 post '/data' do
 	enable_cross_origin
 	doc_id = params[:task_id]
-	current_slice = params[:current_slice]
+	current_slice = params[:slice_id]
 	results = params[:result] #[["0",[1,2]],["2",[3]]
-
-	settings.db["workers"].update({"_id" => BSON::ObjectId(doc_id)}, '$push' => { :map_results => results})
+	
+  settings.db["workers"].update({ '_id' => BSON::ObjectId(doc_id)}, {'$set' => { "map_results.#{current_slice}" => results}})
 	settings.workers = settings.db["workers"].find({"status" => "created"}).to_a
 	get_work_or_data # MANDAR MAS INFORMACION SI LA HAY
 end
@@ -102,7 +102,7 @@ post '/form' do
 		data: data,
 		worker_code: "investigador_map = " + map,
 		reduce: reduce,
-    map_results: [],
+    map_results: {},
 		reduce_results: {},
 		slices: get_slices(data, 3),
 		current_slice: 0,
