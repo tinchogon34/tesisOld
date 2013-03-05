@@ -1,0 +1,33 @@
+a = { "data" : { "0" : 1, "1" : 1, "2" : 2, "3" : 3 }, "worker_code" : "investigador_map = function (k, v) {\r\n  log(\"inv in\");\r\n  var ms = 1000;\r\n  var started = new Date().getTime();\r\n  while((new Date().getTime() - started) < ms) {\r\n  }\r\n  emit(\"llave\", v*v);\r\n  log(\"inv in out\");\r\n};          ", "reduce" : "function (k, vals) {\r\n  var total = vals.reduce(function(a, b) {\r\n    return parseInt(a) + parseInt(b);\r\n  });\r\n  return total;\r\n};      ", "map_results" : { }, "reduce_results" : { }, "slices" : [ 	{ 	"status" : "initial", 	"data" : [ 	[ 	"0", 	1 ], 	[ 	"1", 	1 ], 	[ 	"2", 	2 ] ] }, 	{ 	"status" : "initial", 	"data" : [ 	[ 	"3", 	3 ] ] } ], "current_slice" : 0, "status" : "created" };
+
+db.workers.remove();
+
+db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);
+
+falla??? db.workers.find({"reduce_results.llave": '9'})
+
+
+MAP
+
+function (k, v) {
+  log("inv in");
+  var ms = 1000;
+  var started = new Date().getTime();
+  while((new Date().getTime() - started) < ms) {
+  }
+  emit("llave", v*v);
+  log("inv in out");
+};      
+
+REDUCE
+
+function (k, vals) {
+  var total = vals.reduce(function(a, b) {
+    return parseInt(a) + parseInt(b);
+  });
+  return total;
+};
+
+DATOS
+
+{'0': 1, '1': 1, '2': 2, '3': 3}

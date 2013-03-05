@@ -145,12 +145,12 @@ post '/form' do
   if not (data and map != nil and reduce)
     return "Wrong arguments"
     # TODO: Add
-    # else
-    #     begin
-    #         check_task(data, map, reduce)
-    #     rescue
-    #         return "ERROR!"
-    #     end
+  #else
+   # begin
+    #  check_task(data, map, reduce)
+    #rescue
+     # return "ERROR!"
+    #end
   end
 
   doc = {
