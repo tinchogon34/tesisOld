@@ -53,33 +53,46 @@ def get_work_or_data
     puts 'workers empty'
     return {task_id: 0}.to_json
   end
-  
+
   worker = settings.workers.sample
   worker["current_slice"] = worker["current_slice"].to_i
-  current_slice = worker["current_slice"]
+  current_slice = worker["current_slice"] + 1
   worker_id = worker["_id"]
   
   # llegaron todos los resultados?
   # TODO: ver slices
+  received_count = 0
+  send_count = 0
+  worker["slices"].each do |hash|
+    hash.each do |key, value|
+      if value == 'received'
+        received_count += 1
+      elsif value != 'send'
+        send_count += 1
+      end
+    end
+  end
 
-  if(settings.db["workers"].find({"_id" => worker_id,"slices.status" => "initial"}).to_a.size == 0)
-    puts "entre al initial"
+  if(received_count == worker["slices"].size)
+    puts "entre al received"
     settings.db["workers"].update({"_id" => worker_id},
                                   {'$set' => {:status => 'reduce_pending'}})
     settings.workers.delete worker
-    return {task_id: 0}.to_json
+    return get_work_or_data
+  elsif(send_count == worker["slices"].size)
+    puts "entre al send"
+    return get_work_or_data
   end
 
+  settings.db["workers"].update({"_id" => worker_id},
+                                {'$set' => {:current_slice => current_slice,
+                                 "slices.#{current_slice}.status" => 'send'
+                                }})
   ### lock
   settings.mutex.lock()
  
   puts "segui de largo"
-  settings.db["workers"].update({"_id" => worker_id},
-                                {'$set' => {:current_slice => current_slice+1,
-                                 "slices.#{current_slice}.status" => 'send'
-                                }})
-  worker["current_slice"] += 1
-  resultado = {
+    resultado = {
     task_id: worker_id.to_s,
     slice_id: current_slice,
     data: worker["slices"][current_slice]["data"],
@@ -160,7 +173,7 @@ post '/form' do
     map_results: {},    # {slide_id: [results]}
     reduce_results: {},
     slices: get_slices(data, 3),
-    current_slice: 0.to_i,
+    current_slice: -1.to_i,
     status: 'created'
   }
 
