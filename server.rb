@@ -67,7 +67,7 @@ def get_work_or_data
     hash.each do |key, value|
       if value == 'received'
         received_count += 1
-      elsif value != 'send'
+      elsif value == 'send'
         send_count += 1
       end
     end
@@ -81,6 +81,10 @@ def get_work_or_data
     return get_work_or_data
   elsif(send_count == worker["slices"].size)
     puts "entre al send"
+    settings.db["workers"].update({"_id" => worker_id},
+                                  {'$set' => {:status => 'receive_pending'}})
+    return get_work_or_data
+  elsif(current_slice >= worker["slices"].size)
     return get_work_or_data
   end
 
