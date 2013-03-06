@@ -5,10 +5,10 @@
 # Debe ser ejecutado con NodeJS
 ###
 
-fs = require('fs')
+#fs = require('fs')
 
-result = undefined
-message = undefined
+#result = undefined
+#message = undefined
 test =
     url: false
     nodejs: false
@@ -20,11 +20,11 @@ class _Date
     getTime: () ->
         new Date().getTime() * 1.3
 
-idata = '{"0": 1, "1": 1, "2": 2, "3": 3}'
+#idata = '{"0": 1, "1": 1, "2": 2, "3": 3}'
 
-imap = 'investigador_map = function (k, v) {log("inv in"); var ms = 1000; var started = new Date().getTime(); while((new Date().getTime() - started) < ms) {}emit("llave", v*v); log("inv in out");};'
+#imap = 'investigador_map = function (k, v) {log("inv in"); var ms = 1000; var started = new Date().getTime(); while((new Date().getTime() - started) < ms) {}emit("llave", v*v); log("inv in out");};'
 
-ireduce = 'investigador_reduce = function (k, vals){var total = vals.reduce(function(a, b) {return parseInt(a) + parseInt(b); }); return total;};'
+#ireduce = 'investigador_reduce = function (k, vals){var total = vals.reduce(function(a, b) {return parseInt(a) + parseInt(b); }); return total;};'
 # map/reduce functions
 # imap, ireduce, idata deben tener un str con la info correspondiente.
 if imap == undefined or ireduce == undefined or idata == undefined
@@ -62,13 +62,12 @@ try
     throw 'Contiene sentencias de NodeJS'
   test.nodejs = true
   # check for syntax errors and use of emit
-  context =
-    emit: emit
-    data: idata
-    start: start
-    documment: null
-    Date: _Date
-  
+#  context =
+#    emit: emit
+#    data: idata
+#    start: start
+#    documment: null
+#    Date: _Date
 catch error
   result = false
   message = error

@@ -7,13 +7,7 @@
 */
 
 (function() {
-  var check_emit, context, emit, fs, idata, imap, ireduce, message, result, search_urls, test, _Date;
-
-  fs = require('fs');
-
-  result = void 0;
-
-  message = void 0;
+  var check_emit, emit, search_urls, test, _Date;
 
   test = {
     url: false,
@@ -33,12 +27,6 @@
     return _Date;
 
   })();
-
-  idata = '{"0": 1, "1": 1, "2": 2, "3": 3}';
-
-  imap = 'investigador_map = function (k, v) {log("inv in"); var ms = 1000; var started = new Date().getTime(); while((new Date().getTime() - started) < ms) {}emit("llave", v*v); log("inv in out");};';
-
-  ireduce = 'investigador_reduce = function (k, vals){var total = vals.reduce(function(a, b) {return parseInt(a) + parseInt(b); }); return total;};';
 
   if (imap === void 0 || ireduce === void 0 || idata === void 0) {
     throw 'Variables del investigador sin setear';
@@ -84,13 +72,6 @@
       throw 'Contiene sentencias de NodeJS';
     }
     test.nodejs = true;
-    context = {
-      emit: emit,
-      data: idata,
-      start: start,
-      documment: null,
-      Date: _Date
-    };
   } catch (error) {
     result = false;
     message = error;

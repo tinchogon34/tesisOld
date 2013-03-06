@@ -38,11 +38,14 @@ end
 
 def check_task(data, map, reduce)
   cxt = V8::Context.new
-  cxt["data"] = data
-  cxt["map"] = map
-  cxt["reduce"] = reduce
+  cxt["idata"] = data
+  cxt["imap"] = map
+  cxt["ireduce"] = reduce
+  cxt["result"] = true
+  cxt["message"] = nil
   # TODO: continuar
-  cxt.eval()
+  cxt.eval(File.read('./approver/approver.js'))
+  cxt["result"]
 end
 
 # Devuelve un tarea completa o solo datos para ejecutar en el clinte.
@@ -58,7 +61,7 @@ def get_work_or_data
   worker["current_slice"] = worker["current_slice"].to_i
   current_slice = worker["current_slice"] + 1
   worker_id = worker["_id"]
-  
+
   # llegaron todos los resultados?
   # TODO: ver slices
   received_count = 0
@@ -90,13 +93,13 @@ def get_work_or_data
 
   settings.db["workers"].update({"_id" => worker_id},
                                 {'$set' => {:current_slice => current_slice,
-                                 "slices.#{current_slice}.status" => 'send'
-                                }})
+                                            "slices.#{current_slice}.status" => 'send'
+  }})
   ### lock
   settings.mutex.lock()
- 
+
   puts "segui de largo"
-    resultado = {
+  resultado = {
     task_id: worker_id.to_s,
     slice_id: current_slice,
     data: worker["slices"][current_slice]["data"],
@@ -162,12 +165,10 @@ post '/form' do
   if not (data and map != nil and reduce)
     return "Wrong arguments"
     # TODO: Add
-  #else
-   # begin
-    #  check_task(data, map, reduce)
-    #rescue
-     # return "ERROR!"
-    #end
+  else
+    if not check_task(data, map, reduce)
+      return "ERROR!"
+    end
   end
 
   doc = {
