@@ -10,7 +10,7 @@ include Mongo
 set :db, nil
 set :workers, nil
 set :worker_code, File.read("worker.js")
-set :trusted_hosts, ['http://localhost:4567']
+set :trusted_hosts, ['http://wikipedia.com.ar:4567']
 set :protection, origin_whitelist: settings.trusted_hosts
 set :mutex, Mutex.new
 
@@ -47,7 +47,7 @@ end
 
 # Devuelve un tarea completa o solo datos para ejecutar en el clinte.
 def get_work_or_data
-  settings.workers = settings.db["workers"].find({"status" => "created"}).to_a
+  settings.workers = settings.db["workers"].find({"status" => {'$ne' => "reduce_pending"}}).to_a
 
   if settings.workers.empty?
     puts 'workers empty'
