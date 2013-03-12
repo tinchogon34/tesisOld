@@ -72,23 +72,24 @@ get_work_or_data = (callback) ->
                     else if value.status == 'send'
                         send_count++
 
-                switch Object.keys(work.slices).length
-                    when received_count
-                        console.log "Entre al received"
-                        collection.update {_id: work._id}, {$set: {status: 'reduce_pending'}}, (err, count) ->
-                            assert.equal null, err
-                            assert.equal 1, count
+                size = Object.keys(work.slices).length
+                if size == received_count
+                    console.log "Entre al received"
+                    collection.update {_id: work._id}, {$set: {status: 'reduce_pending'}}, (err, count) ->
+                        assert.equal null, err
+                        assert.equal 1, count
 
-                            get_work_or_data callback
-                        return
-                    when send_count
-                        console.log "Entre al send"
-                        collection.update {_id: work._id}, {$set: {status: 'receive_pending'}}, (err, count) ->
-                            assert.equal null, err
-                            assert.equal 1, count
+                        get_work_or_data callback
+                    return
+                else if send_count > 0
+                    console.log "Entre al send"
+                    collection.update {_id: work._id}, {$set: {status: 'receive_pending'}}, (err, count) ->
+                        assert.equal null, err
+                        assert.equal 1, count
 
-                            get_work_or_data callback
-                        return
+                        get_work_or_data callback
+                    return
+
                 update = {}
                 update["slices.#{work.current_slice+1}.status"] = "send"
                 collection.update {_id: work._id}, {$inc: {current_slice: 1}, $set: update}, (err, count) ->
