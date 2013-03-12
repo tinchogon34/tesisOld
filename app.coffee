@@ -72,9 +72,6 @@ get_work_or_data = (callback) ->
                     else if value.status == 'send'
                         send_count++
 
-                console.log "Aaaaaaaaaaaaaa" +  Object.keys(work.slices).length
-                console.log received_count
-                console.log send_count
                 switch Object.keys(work.slices).length
                     when received_count
                         console.log "Entre al received"
