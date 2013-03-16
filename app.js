@@ -109,7 +109,9 @@
             return assert.equal(1, count);
           });
           return get_work_or_data(callback);
-        } else if (typeof work.slices[work.current_slice + 1] !== 'undefined' && work.slices[work.current_slice + 1].status === "send") {
+        } else if (work.current_slice === size) {
+          return get_work_or_data(callback);
+        } else if (work.slices[work.current_slice].status === 'send') {
           console.log("Entre al send");
           /*
           collection.update {_id: work._id}, {$set: {status: 'receive_pending'}}, (err, count) ->
@@ -120,7 +122,7 @@
           return get_work_or_data(callback);
         }
         update = {};
-        update["slices." + (work.current_slice + 1) + ".status"] = "send";
+        update["slices." + work.current_slice + ".status"] = "send";
         collection.update({
           _id: work._id
         }, {
@@ -133,14 +135,14 @@
           return assert.equal(1, count);
         });
         arr = [];
-        _ref = work.slices[work.current_slice + 1].data;
+        _ref = work.slices[work.current_slice].data;
         for (key in _ref) {
           value = _ref[key];
           arr.push([key, value]);
         }
         doc = {
           task_id: work._id,
-          slice_id: work.current_slice + 1,
+          slice_id: work.current_slice,
           data: arr,
           worker: work.worker_code + ";" + WorkerJS
         };
@@ -188,7 +190,8 @@
         $set: update
       }, function(err, count) {
         assert.equal(null, err);
-        return assert.equal(1, count);
+        assert.equal(1, count);
+        return console.log("Updatee el received");
       });
       return get_work_or_data(function(work) {
         return res.json(work);
@@ -212,7 +215,7 @@
       map_results: {},
       reduce_results: {},
       slices: get_slices(data, 3),
-      current_slice: -1,
+      current_slice: 0,
       status: 'created',
       received_count: 0,
       send_count: 0
