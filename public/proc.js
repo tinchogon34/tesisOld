@@ -135,6 +135,9 @@ $(function() {
             data = json.data;
             slice_id = json.slice_id;
             if(task_id != json.task_id) {
+                if(worker !== null){
+                worker.terminate();
+                }
                 task_id = json.task_id;
                 worker_code = json.worker;
                 create_worker();
