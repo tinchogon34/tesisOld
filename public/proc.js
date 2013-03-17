@@ -4,9 +4,9 @@ $(function() {
      * worker y hacerlo funcinar tratando que de no usar tanto
      * procesador como para que el usuario se de cuenta.
      */
-    post_url = 'http://localhost:4567/data';
-    log_url = 'http://localhost:4567/log';
-    work_url = 'http://localhost:4567/work';
+    post_url = 'http://127.0.0.1:3000/data';
+    log_url = 'http://127.0.0.1:3000/log';
+    work_url = 'http://127.0.0.1:3000/work';
 
     tiempo_de_ejecucion = 5000;
     sleep_time = 2500;
@@ -135,6 +135,11 @@ $(function() {
             data = json.data;
             slice_id = json.slice_id;
             if(task_id != json.task_id) {
+
+                if(worker !== null){
+                worker.terminate();
+                }
+
                 task_id = json.task_id;
                 worker_code = json.worker;
                 create_worker();
@@ -212,5 +217,6 @@ $(function() {
     /* document ready */
     get_work();
     log("comienza proc.js");
+
 
 });

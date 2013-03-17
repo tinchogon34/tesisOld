@@ -48,7 +48,7 @@ send_result = function () {
   */
   sleep = true;
   cola.i = 0;
-
+  
   log("send_result worker");
   log(result);
   postMessage({
@@ -115,13 +115,18 @@ this.onmessage = function(evnt) {
         cola.process();
       }
       catch (err) {
+        clearInterval(intervalId);
         log(err.message);
         send_result();
       }},50);
   }
   else if(msg.type == "pause") {
+      if(intervalId !== null){
+          clearInterval(intervalId);
+      }
+
     sleep = true;
-    clearInterval(intervalId);
+
     log("pause recv");
     setTimeout(function(){
       sleep = false;
@@ -132,6 +137,7 @@ this.onmessage = function(evnt) {
         }
         catch (err) {
           log(err.message);
+
           send_result();
         }},250);
     },msg.sleep_time);
