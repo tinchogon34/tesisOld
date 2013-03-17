@@ -5,26 +5,28 @@ MongoClient = require('mongodb').MongoClient
 ObjectID = require('mongodb').ObjectID
 
 app = express()
-DbPath = 'mongodb://127.0.0.1:27017/tesis'
+trusted_hosts = ['http://127.0.0.1:3000']
+db_url = 'mongodb://127.0.0.1:27017/tesis?maxPoolSize=1'
+worker_js = fs.readFileSync 'worker.js', 'utf8'
 db = null
 
-MongoClient.connect DbPath, (err, connection) ->
+MongoClient.connect db_url, (err, connection) ->
     assert.equal null, err
     db = connection
 
-WorkerJS = fs.readFileSync 'worker.js', 'utf8'
-
 allowCrossDomain = (req, res, next) ->
-    res.header 'Access-Control-Allow-Origin', ['http://127.0.0.1:3000']
+    res.header 'Access-Control-Allow-Origin', trusted_hosts
     res.header 'Access-Control-Allow-Methods', 'GET, POST'
     res.header 'Access-Control-Allow-Headers', 'Content-Type'
     next()
 
+### SET MIDDLEWARE ###
 app.use express.compress()
 app.use express.static(__dirname + '/public')
 app.use express.logger()
 app.use express.bodyParser()
 app.use allowCrossDomain
+#######################
 
 shuffle = (h) ->
     keys = Object.keys(h)
@@ -64,10 +66,10 @@ get_work_or_data = (callback) ->
             if !items.length
                 console.log "Workers empty"
                 
-                return callback {task_id: 0} # NO HAY TRABAJOS PENDIENTES DE PROCESAR
+                return callback {task_id: 0} # No more works
 
-            work = items[Math.floor(Math.random()*items.length)]
-
+            work = items[Math.floor(Math.random()*items.length)] # Random pick one work
+            # NEED TO LOCK IT, no more than one request with same slice
             size = Object.keys(work.slices).length
 
             if size == work.received_count
@@ -78,16 +80,7 @@ get_work_or_data = (callback) ->
                     
                 return get_work_or_data callback
 
-            else if work.current_slice == size
-                return get_work_or_data callback
-
-            else if work.slices[work.current_slice].status == 'send'
-                console.log "Entre al send"
-                ###
-                collection.update {_id: work._id}, {$set: {status: 'receive_pending'}}, (err, count) ->
-                    assert.equal null, err
-                    assert.equal 1, count
-                ###    
+            else if work.current_slice == size or work.slices[work.current_slice].status == 'send'
                 return get_work_or_data callback
 
             update = {}
@@ -96,9 +89,13 @@ get_work_or_data = (callback) ->
                 assert.equal null, err
                 assert.equal 1, count
                 
+            ### {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]] ###
+            ### PROC.JS COMPATIBILITY, REMOVE THIS! ###
             arr = []
             for key, value of work.slices[work.current_slice].data
                 arr.push [key, value]
+            #############################################################
+
             doc =
                 task_id: work._id
                 slice_id: work.current_slice
@@ -111,8 +108,11 @@ get_work_or_data = (callback) ->
         )
 
 app.get '/work', (req, res) ->
-    return get_work_or_data (work) ->
-        res.json work    
+    # Response only if json ajax request from known hosts
+    if req.xhr and (req.accepts('json') != 'undefined') and "#{req.protocol}://#{req.headers.host}" in trusted_hosts
+        return get_work_or_data (work) ->
+            res.json work    
+    res.send ""
 
 app.post '/data', (req, res) ->
     doc_id = req.body.task_id
@@ -133,14 +133,14 @@ app.post '/data', (req, res) ->
 
     db.collection 'workers', (err, collection) ->
         assert.equal null, err
+        
         ###
-        Debe esperar el resultado del update???
+        Need to wait update status???
         ###
+        
         collection.update {_id: new ObjectID(doc_id)}, {$inc: {received_count: 1}, $set: update}, (err, count) ->
             assert.equal null, err
             assert.equal 1, count
-
-            console.log "Updatee el received"
         
         return get_work_or_data (work) ->
             res.json work
