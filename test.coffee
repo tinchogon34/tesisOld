@@ -1,6 +1,9 @@
 MongoClient = require('mongodb').MongoClient
 ObjectID = require('mongodb').ObjectID
+open = require 'open'
 assert = require 'assert'
+sleep = require('sleep')
+require './app.js'
 
 db_url = 'mongodb://127.0.0.1:27017/tesis?maxPoolSize=10'
 
@@ -31,7 +34,10 @@ doc =
 	status: "created"
 	received_count: 0
 	send_count: 0
-    		
+
+open('http://127.0.0.1:3000') for i in [1..10]
+sleep.sleep(10)
+
 MongoClient.connect db_url, (err, db) ->
     assert.equal null, err
 
@@ -44,5 +50,3 @@ MongoClient.connect db_url, (err, db) ->
     		(doc["_id"] = new ObjectID()
     		collection.insert doc, (err, result) ->
     			assert.equal null, err) for i in [1..1000]
-    		
-    		process.exit()

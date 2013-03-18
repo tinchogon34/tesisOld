@@ -6,7 +6,7 @@ ObjectID = require('mongodb').ObjectID
 
 app = express()
 trusted_hosts = ['http://127.0.0.1:3000']
-db_url = 'mongodb://127.0.0.1:27017/tesis?maxPoolSize=1'
+db_url = 'mongodb://127.0.0.1:27017/tesis'
 worker_js = fs.readFileSync 'worker.js', 'utf8'
 db = null
 
@@ -100,7 +100,7 @@ get_work_or_data = (callback) ->
                 task_id: work._id
                 slice_id: work.current_slice
                 data: arr
-                worker: work.worker_code + ";" + WorkerJS
+                worker: work.worker_code + ";" + worker_js
 
                         
             return callback doc

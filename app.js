@@ -17,7 +17,7 @@
 
   trusted_hosts = ['http://127.0.0.1:3000'];
 
-  db_url = 'mongodb://127.0.0.1:27017/tesis?maxPoolSize=1';
+  db_url = 'mongodb://127.0.0.1:27017/tesis';
 
   worker_js = fs.readFileSync('worker.js', 'utf8');
 
@@ -148,7 +148,7 @@
           task_id: work._id,
           slice_id: work.current_slice,
           data: arr,
-          worker: work.worker_code + ";" + WorkerJS
+          worker: work.worker_code + ";" + worker_js
         };
         return callback(doc);
       });
@@ -186,7 +186,7 @@
     return db.collection('workers', function(err, collection) {
       assert.equal(null, err);
       /*
-      Debe esperar el resultado del update???
+      Need to wait update status???
       */
 
       collection.update({
@@ -198,8 +198,7 @@
         $set: update
       }, function(err, count) {
         assert.equal(null, err);
-        assert.equal(1, count);
-        return console.log("Updatee el received");
+        return assert.equal(1, count);
       });
       return get_work_or_data(function(work) {
         return res.json(work);
