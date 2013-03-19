@@ -93,7 +93,7 @@
           $ne: "reduce_pending"
         }
       }).toArray(function(err, items) {
-        var arr, doc, key, size, update, value, work, _ref;
+        var size, work;
         assert.equal(null, err);
         if (!items.length) {
           console.log("Workers empty");
@@ -103,7 +103,7 @@
         }
         work = items[Math.floor(Math.random() * items.length)];
         size = Object.keys(work.slices).length;
-        if (size === work.received_count) {
+        if (work.status !== 'reduce_pending' && work.received_count === size) {
           console.log("Entre al received");
           collection.update({
             _id: work._id
@@ -116,41 +116,50 @@
             return assert.equal(1, count);
           });
           return get_work_or_data(callback);
-        } else if (work.current_slice === size || work.slices[work.current_slice].status === 'send') {
+        } else if (work.current_slice === size) {
           return get_work_or_data(callback);
         }
-        update = {};
-        update["slices." + work.current_slice + ".status"] = "send";
-        collection.update({
+        return collection.update({
           _id: work._id
         }, {
           $inc: {
             current_slice: 1
-          },
-          $set: update
+          }
         }, function(err, count) {
+          var arr, doc, key, value, _ref;
           assert.equal(null, err);
-          return assert.equal(1, count);
+          assert.equal(1, count);
+          /*
+          if work.slices[work.current_slice].status == 'send'
+              return get_work_or_data callback
+          
+          update = {}
+          update["slices.#{work.current_slice}.status"] = "send"
+          collection.update {_id: work._id}, {$set: update}, (err, count) ->
+              assert.equal null, err
+              assert.equal 1, count
+          */
+
+          /* {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]]
+          */
+
+          /* PROC.JS COMPATIBILITY, REMOVE THIS!
+          */
+
+          arr = [];
+          _ref = work.slices[work.current_slice].data;
+          for (key in _ref) {
+            value = _ref[key];
+            arr.push([key, value]);
+          }
+          doc = {
+            task_id: work._id,
+            slice_id: work.current_slice,
+            data: arr,
+            worker: work.worker_code + ";" + worker_js
+          };
+          return callback(doc);
         });
-        /* {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]]
-        */
-
-        /* PROC.JS COMPATIBILITY, REMOVE THIS!
-        */
-
-        arr = [];
-        _ref = work.slices[work.current_slice].data;
-        for (key in _ref) {
-          value = _ref[key];
-          arr.push([key, value]);
-        }
-        doc = {
-          task_id: work._id,
-          slice_id: work.current_slice,
-          data: arr,
-          worker: work.worker_code + ";" + worker_js
-        };
-        return callback(doc);
       });
     });
   };

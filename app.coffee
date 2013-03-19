@@ -72,7 +72,7 @@ get_work_or_data = (callback) ->
             # NEED TO LOCK IT, no more than one request with same slice
             size = Object.keys(work.slices).length
 
-            if size == work.received_count
+            if work.status != 'reduce_pending' and work.received_count == size
                 console.log "Entre al received"
                 collection.update {_id: work._id}, {$set: {status: 'reduce_pending'}}, (err, count) ->
                     assert.equal null, err
@@ -80,30 +80,37 @@ get_work_or_data = (callback) ->
                     
                 return get_work_or_data callback
 
-            else if work.current_slice == size or work.slices[work.current_slice].status == 'send'
-                return get_work_or_data callback
+            else if work.current_slice == size
+                return get_work_or_data callback                    
 
-            update = {}
-            update["slices.#{work.current_slice}.status"] = "send"
-            collection.update {_id: work._id}, {$inc: {current_slice: 1}, $set: update}, (err, count) ->
+            collection.update {_id: work._id}, {$inc: {current_slice: 1}}, (err, count) ->
                 assert.equal null, err
-                assert.equal 1, count
+                assert.equal 1, count                
+                ###
+                if work.slices[work.current_slice].status == 'send'
+                    return get_work_or_data callback
                 
-            ### {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]] ###
-            ### PROC.JS COMPATIBILITY, REMOVE THIS! ###
-            arr = []
-            for key, value of work.slices[work.current_slice].data
-                arr.push [key, value]
-            #############################################################
+                update = {}
+                update["slices.#{work.current_slice}.status"] = "send"
+                collection.update {_id: work._id}, {$set: update}, (err, count) ->
+                    assert.equal null, err
+                    assert.equal 1, count
+                ###    
+                ### {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]] ###
+                ### PROC.JS COMPATIBILITY, REMOVE THIS! ###
+                arr = []
+                for key, value of work.slices[work.current_slice].data
+                    arr.push [key, value]
+                #############################################################
 
-            doc =
-                task_id: work._id
-                slice_id: work.current_slice
-                data: arr
-                worker: work.worker_code + ";" + worker_js
+                doc =
+                    task_id: work._id
+                    slice_id: work.current_slice
+                    data: arr
+                    worker: work.worker_code + ";" + worker_js
 
-                        
-            return callback doc
+                            
+                return callback doc
 
         )
 
