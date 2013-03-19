@@ -116,7 +116,7 @@ get_work_or_data = (callback) ->
 
 app.get '/work', (req, res) ->
     # Response only if json ajax request from known hosts
-    if req.xhr and (req.accepts('json') != 'undefined') and "#{req.protocol}://#{req.headers.host}" in trusted_hosts
+    if req.xhr and (req.accepts('json') != 'undefined') and req.headers.origin in trusted_hosts
         return get_work_or_data (work) ->
             res.json work    
     res.send ""
