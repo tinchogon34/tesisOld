@@ -166,7 +166,7 @@
 
   app.get('/work', function(req, res) {
     var _ref;
-    if (req.xhr && (req.accepts('json') !== 'undefined') && (_ref = "" + req.protocol + "://" + req.headers.host, __indexOf.call(trusted_hosts, _ref) >= 0)) {
+    if ((req.accepts('json') !== 'undefined') && (_ref = req.headers.origin, __indexOf.call(trusted_hosts, _ref) >= 0)) {
       return get_work_or_data(function(work) {
         return res.json(work);
       });
