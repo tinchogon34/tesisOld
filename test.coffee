@@ -66,7 +66,7 @@ doc2 =
 docs.push doc1
 docs.push doc2
 
-open('http://127.0.0.1:3000') for i in [1..10]
+open('http://localhost:3000') for i in [1..10]
 sleep.sleep(10)
 
 MongoClient.connect db_url, (err, db) ->

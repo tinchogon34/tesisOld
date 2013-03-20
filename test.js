@@ -89,7 +89,7 @@
   docs.push(doc2);
 
   for (i = _i = 1; _i <= 10; i = ++_i) {
-    open('http://127.0.0.1:3000');
+    open('http://localhost:3000');
   }
 
   sleep.sleep(10);
