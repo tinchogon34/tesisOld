@@ -24,7 +24,8 @@
   db = null;
 
   MongoClient.connect(db_url, function(err, connection) {
-    assert.equal(null, err);
+    assert.ifError(err);
+    assert.ok(connection);
     return db = connection;
   });
 
@@ -87,14 +88,16 @@
 
   get_work_or_data = function(callback) {
     return db.collection('workers', function(err, collection) {
-      assert.equal(null, err);
+      assert.ifError(err);
+      assert.ok(collection);
       return collection.find({
         "status": {
           $ne: "reduce_pending"
         }
       }).toArray(function(err, items) {
         var size, work;
-        assert.equal(null, err);
+        assert.ifError(err);
+        assert.ok(items);
         if (!items.length) {
           console.log("Workers empty");
           return callback({
@@ -112,34 +115,25 @@
               status: 'reduce_pending'
             }
           }, function(err, count) {
-            assert.equal(null, err);
+            assert.ifError(err);
             return assert.equal(1, count);
           });
           return get_work_or_data(callback);
-        } else if (work.current_slice === size) {
+        } else if (work.current_slice === size - 1) {
           return get_work_or_data(callback);
         }
-        return collection.update({
+        return collection.findAndModify({
           _id: work._id
-        }, {
+        }, [], {
           $inc: {
             current_slice: 1
           }
-        }, function(err, count) {
+        }, {
+          "new": true
+        }, function(err, work) {
           var arr, doc, key, value, _ref;
-          assert.equal(null, err);
-          assert.equal(1, count);
-          /*
-          if work.slices[work.current_slice].status == 'send'
-              return get_work_or_data callback
-          
-          update = {}
-          update["slices.#{work.current_slice}.status"] = "send"
-          collection.update {_id: work._id}, {$set: update}, (err, count) ->
-              assert.equal null, err
-              assert.equal 1, count
-          */
-
+          assert.ifError(err);
+          assert.ok(work);
           /* {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]]
           */
 
@@ -193,7 +187,8 @@
     */
 
     return db.collection('workers', function(err, collection) {
-      assert.equal(null, err);
+      assert.ifError(err);
+      assert.ok(collection);
       /*
       Need to wait update status???
       */
@@ -206,7 +201,7 @@
         },
         $set: update
       }, function(err, count) {
-        assert.equal(null, err);
+        assert.ifError(err);
         return assert.equal(1, count);
       });
       return get_work_or_data(function(work) {
@@ -231,17 +226,18 @@
       map_results: {},
       reduce_results: {},
       slices: get_slices(data, 3),
-      current_slice: 0,
+      current_slice: -1,
       status: 'created',
       received_count: 0,
       send_count: 0
     };
     return db.collection('workers', function(err, collection) {
-      assert.equal(null, err);
+      assert.ifError(err);
       collection.insert(doc, {
         w: 1
       }, function(err, result) {
-        return assert.equal(null, err);
+        assert.ifErro(err);
+        return assert.ok(result);
       });
       return res.send("Thx for submitting a job");
     });

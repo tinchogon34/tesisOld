@@ -11,7 +11,9 @@ worker_js = fs.readFileSync 'worker.js', 'utf8'
 db = null
 
 MongoClient.connect db_url, (err, connection) ->
-    assert.equal null, err
+    assert.ifError err
+    assert.ok connection
+
     db = connection
 
 allowCrossDomain = (req, res, next) ->
@@ -58,10 +60,12 @@ get_slices = (data, size) ->
 get_work_or_data = (callback) ->
     
     db.collection 'workers', (err, collection) ->
-        assert.equal null, err
+        assert.ifError err
+        assert.ok collection
        
         collection.find({"status": {$ne: "reduce_pending"}}).toArray((err, items) ->
-            assert.equal null, err
+            assert.ifError err
+            assert.ok items
 
             if !items.length
                 console.log "Workers empty"
@@ -75,27 +79,18 @@ get_work_or_data = (callback) ->
             if work.status != 'reduce_pending' and work.received_count == size
                 console.log "Entre al received"
                 collection.update {_id: work._id}, {$set: {status: 'reduce_pending'}}, (err, count) ->
-                    assert.equal null, err
+                    assert.ifError err
                     assert.equal 1, count
                     
                 return get_work_or_data callback
 
-            else if work.current_slice == size
+            else if work.current_slice == size-1
                 return get_work_or_data callback                    
 
-            collection.update {_id: work._id}, {$inc: {current_slice: 1}}, (err, count) ->
-                assert.equal null, err
-                assert.equal 1, count                
-                ###
-                if work.slices[work.current_slice].status == 'send'
-                    return get_work_or_data callback
+            collection.findAndModify {_id: work._id}, [], {$inc: {current_slice: 1}}, {new: true}, (err, work) ->
+                assert.ifError err
+                assert.ok work
                 
-                update = {}
-                update["slices.#{work.current_slice}.status"] = "send"
-                collection.update {_id: work._id}, {$set: update}, (err, count) ->
-                    assert.equal null, err
-                    assert.equal 1, count
-                ###    
                 ### {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]] ###
                 ### PROC.JS COMPATIBILITY, REMOVE THIS! ###
                 arr = []
@@ -139,14 +134,15 @@ app.post '/data', (req, res) ->
     ###
 
     db.collection 'workers', (err, collection) ->
-        assert.equal null, err
+        assert.ifError err
+        assert.ok collection
         
         ###
         Need to wait update status???
         ###
         
         collection.update {_id: new ObjectID(doc_id)}, {$inc: {received_count: 1}, $set: update}, (err, count) ->
-            assert.equal null, err
+            assert.ifError err
             assert.equal 1, count
         
         return get_work_or_data (work) ->
@@ -168,15 +164,16 @@ app.post '/form', (req, res) ->
         map_results: {}
         reduce_results: {}
         slices: get_slices(data, 3)
-        current_slice: 0
+        current_slice: -1
         status: 'created'
         received_count: 0
         send_count: 0
 
     db.collection 'workers', (err, collection) ->
-        assert.equal null, err
+        assert.ifError err
         collection.insert doc, {w: 1}, (err, result) ->
-            assert.equal null, err
+            assert.ifErro err
+            assert.ok result
         
         res.send "Thx for submitting a job"
         

@@ -30,7 +30,7 @@ doc1 =
 			data:
 				3: 3
 
-	current_slice: 0
+	current_slice: -1
 	status: "created"
 	received_count: 0
 	send_count: 0
@@ -58,7 +58,7 @@ doc2 =
 				1: 8
 				2: 3
 
-	current_slice: 0
+	current_slice: -1
 	status: "created"
 	received_count: 0
 	send_count: 0

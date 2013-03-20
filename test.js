@@ -45,7 +45,7 @@
         }
       }
     },
-    current_slice: 0,
+    current_slice: -1,
     status: "created",
     received_count: 0,
     send_count: 0
@@ -78,7 +78,7 @@
         }
       }
     },
-    current_slice: 0,
+    current_slice: -1,
     status: "created",
     received_count: 0,
     send_count: 0
