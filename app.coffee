@@ -60,11 +60,11 @@ get_slices = (data, size) ->
 get_work_or_data = (callback) ->
     
     db.collection 'workers', (err, collection) ->
-        assert.ifError err
+        return callback {task_id: 0} if err
         assert.ok collection
        
         collection.find({"status": {$ne: "reduce_pending"}}).toArray((err, items) ->
-            assert.ifError err
+            return callback {task_id: 0} if err
             assert.ok items
 
             if !items.length
@@ -79,7 +79,7 @@ get_work_or_data = (callback) ->
             if work.status != 'reduce_pending' and work.received_count == size
                 console.log "Entre al received"
                 collection.update {_id: work._id}, {$set: {status: 'reduce_pending'}}, (err, count) ->
-                    assert.ifError err
+                    return callback {task_id: 0} if err
                     assert.equal 1, count
                     
                 return get_work_or_data callback
@@ -88,7 +88,7 @@ get_work_or_data = (callback) ->
                 return get_work_or_data callback                    
 
             collection.findAndModify {_id: work._id}, [], {$inc: {current_slice: 1}}, {new: true}, (err, work) ->
-                assert.ifError err
+                return callback {task_id: 0} if err
                 assert.ok work
                 
                 ### {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]] ###
@@ -110,7 +110,7 @@ get_work_or_data = (callback) ->
         )
 
 app.get '/work', (req, res) ->
-    # Response only if json ajax request from known hosts
+    # Response only if CORS json request from known hosts
     if (req.accepts('json') != 'undefined') and req.headers.origin in trusted_hosts
         return get_work_or_data (work) ->
             res.json work    
@@ -134,7 +134,7 @@ app.post '/data', (req, res) ->
     ###
 
     db.collection 'workers', (err, collection) ->
-        assert.ifError err
+        return res.json {task_id: 0} if err
         assert.ok collection
         
         ###
@@ -142,7 +142,7 @@ app.post '/data', (req, res) ->
         ###
         
         collection.update {_id: new ObjectID(doc_id)}, {$inc: {received_count: 1}, $set: update}, (err, count) ->
-            assert.ifError err
+            return res.json {task_id: 0} if err
             assert.equal 1, count
         
         return get_work_or_data (work) ->
@@ -172,7 +172,7 @@ app.post '/form', (req, res) ->
     db.collection 'workers', (err, collection) ->
         assert.ifError err
         collection.insert doc, {w: 1}, (err, result) ->
-            assert.ifErro err
+            assert.ifError err
             assert.ok result
         
         res.send "Thx for submitting a job"

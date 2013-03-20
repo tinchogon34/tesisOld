@@ -88,7 +88,11 @@
 
   get_work_or_data = function(callback) {
     return db.collection('workers', function(err, collection) {
-      assert.ifError(err);
+      if (err) {
+        return callback({
+          task_id: 0
+        });
+      }
       assert.ok(collection);
       return collection.find({
         "status": {
@@ -96,7 +100,11 @@
         }
       }).toArray(function(err, items) {
         var size, work;
-        assert.ifError(err);
+        if (err) {
+          return callback({
+            task_id: 0
+          });
+        }
         assert.ok(items);
         if (!items.length) {
           console.log("Workers empty");
@@ -115,7 +123,11 @@
               status: 'reduce_pending'
             }
           }, function(err, count) {
-            assert.ifError(err);
+            if (err) {
+              return callback({
+                task_id: 0
+              });
+            }
             return assert.equal(1, count);
           });
           return get_work_or_data(callback);
@@ -132,7 +144,11 @@
           "new": true
         }, function(err, work) {
           var arr, doc, key, value, _ref;
-          assert.ifError(err);
+          if (err) {
+            return callback({
+              task_id: 0
+            });
+          }
           assert.ok(work);
           /* {"0": 1, "1": 1, "2": 2} => [["0",1],["1",1],["2",2]]
           */
@@ -187,7 +203,11 @@
     */
 
     return db.collection('workers', function(err, collection) {
-      assert.ifError(err);
+      if (err) {
+        return res.json({
+          task_id: 0
+        });
+      }
       assert.ok(collection);
       /*
       Need to wait update status???
@@ -201,7 +221,11 @@
         },
         $set: update
       }, function(err, count) {
-        assert.ifError(err);
+        if (err) {
+          return res.json({
+            task_id: 0
+          });
+        }
         return assert.equal(1, count);
       });
       return get_work_or_data(function(work) {
@@ -236,7 +260,7 @@
       collection.insert(doc, {
         w: 1
       }, function(err, result) {
-        assert.ifErro(err);
+        assert.ifError(err);
         return assert.ok(result);
       });
       return res.send("Thx for submitting a job");
