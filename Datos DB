@@ -36,3 +36,23 @@
 }
 
 db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);db.workers.insert(a);
+
+
+form
+{"0": 1,"1": 1,"2": 2,"3": 3}
+
+function (k, v) {
+  log("inv in");
+  var ms = 1000;
+  var started = new Date().getTime();
+  while((new Date().getTime() - started) < ms) {}
+  emit("llave", v*v);
+  log("inv in out");
+};   
+
+function (k, vals) {
+  var total = vals.reduce(function(a, b) {
+    return parseInt(a) + parseInt(b);
+  });
+  return total;
+};
