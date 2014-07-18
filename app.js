@@ -2,7 +2,7 @@
   var MongoClient, ObjectID, allowCrossDomain, app, assert, bodyParser, compression, db, db_url, express, fs, get_slices, get_work_or_data, morgan, serveStatic, shuffle, trusted_hosts, worker_js,
     __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  express = require('express');
+  express = require('express.io');
 
   bodyParser = require('body-parser');
 

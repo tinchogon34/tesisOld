@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "express": "4.6.1",
+    "express.io": "1.1.13",
     "mongodb": "1.4.7",
     "sleep": "1.1.8",
     "body-parser": "1.4.3",

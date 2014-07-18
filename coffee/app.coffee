@@ -1,4 +1,4 @@
-express = require 'express'
+express = require 'express.io'
 bodyParser = require 'body-parser'
 compression = require 'compression'
 morgan  = require 'morgan'
